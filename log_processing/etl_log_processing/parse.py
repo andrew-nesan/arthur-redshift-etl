@@ -93,10 +93,10 @@ class LogRecord(collections.UserDict):
             },
             "monitor": {
                 "properties": {
+                    "target": {"type": "keyword"},
                     "monitor_id": {"type": "keyword"},
                     "step": {"type": "keyword"},
                     "event": {"type": "keyword"},
-                    "target": {"type": "keyword"},
                     "elapsed": {"type": "float"},
                     "error_codes": {"type": "text"}
                 }

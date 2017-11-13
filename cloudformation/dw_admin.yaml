@@ -34,6 +34,8 @@ Resources:
                         AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
                     Action: "sts:AssumeRole"
             Path: "/"
+            ManagedPolicyArns:
+                - "arn:aws:iam::aws:policy/ReadOnlyAccess"
             Policies:
               - PolicyName: "admin_default_policy"
                 PolicyDocument:
@@ -42,29 +44,14 @@ Resources:
                       - Sid: "CreateAnything"
                         Effect: "Allow"
                         Action:
-                            - "cloudwatch:DescribeAlarms"
-                            - "datapipeline:Describe*"
-                            - "datapipeline:Get*"
-                            - "datapipeline:List*"
                             - "datapipeline:Query*"
                             - "ec2:AuthorizeSecurityGroup*"
                             - "ec2:CreateNetworkInterface"
                             - "ec2:CreateTags"
-                            - "ec2:Describe*"
                             - "ec2:RunInstances"
                             - "elasticmapreduce:*"
-                            - "emr:*"
-                            - "iam:GetRole"
-                            - "iam:GetRolePolicy"
-                            - "iam:ListInstanceProfiles"
-                            - "iam:ListRolePolicies"
                             - "iam:PassRole"
-                            - "lambda:*"
-                            - "s3:Get*"
-                            - "s3:List*"
                             - "sns:Create*"
-                            - "sns:Get*"
-                            - "sns:List*"
                             - "sns:Publish"
                         Resource: "*"
                       - Sid: "ModifyOnlyOursInS3"
@@ -72,9 +59,7 @@ Resources:
                         Action:
                             - "s3:Delete*"
                             - "s3:Put*"
-                        Resource:
-                            - !Join [ '', [ 'arn:aws:s3:::', "Fn::ImportValue": !Sub "${VpcStackName}::object-store", "/*" ] ]
-                            - !Join [ '', [ 'arn:aws:s3:::', "Fn::ImportValue": !Sub "${VpcStackName}::data-lake", "/*" ] ]
+                        Resource: !Split [ ",", "Fn::ImportValue": !Sub "${VpcStackName}::concatenated-bucket-arns" ]
                       - Sid: "ModifyOnlyOursInSNS"
                         Effect: "Allow"
                         Action:
@@ -89,21 +74,21 @@ Resources:
                         Effect: "Allow"
                         Action: "dynamodb:*"
                         Resource: "arn:aws:dynamodb:*:*:table/dw-etl-*"
-                      - Sid: "ModifyOnlyOursInDataPipeline"
+                      - Sid: "ModifyOnlyByTag"
                         Effect: "Allow"
-                        Action: "datapipeline:*"
+                        Action:
+                            - "datapipeline:*"
+                            - "lambda:Invoke*"
                         Resource: "*"
-                        # Could we use this condition based on our tag for more (or all) stuff?
                         Condition:
                             StringEquals:
-                                "datapipeline:Tag/user:project": "data-warehouse"
+                                - "datapipeline:Tag/user:project": "data-warehouse"
+                                - "lambda:Tag/user:project": "data-warehouse"
                       - Sid: "ModifyParameters"
                         Effect: "Allow"
                         Action:
                             - "ssm:AddTagsToResource"
                             - "ssm:DeleteParameter"
-                            - "ssm:DescribeParameters"
-                            - "ssm:GetParameter*"
                             - "ssm:PutParameter"
                         Resource: "arn:aws:ssm:*:*:parameter/DW-ETL/*"
                       - Sid: "ModifyOnlyOursWIP"
@@ -119,7 +104,6 @@ Resources:
                             - "ec2:RevokeSecurityGroupEgress"
                             - "ec2:TerminateInstances"
                         Resource: "*"
-
 
 
     AssumeAdminPolicy:
