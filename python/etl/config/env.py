@@ -2,6 +2,22 @@ import getpass
 import os
 from typing import Union
 
+# Parameter store
+#
+#   prefix: DW-ETL/
+#   hierarchical search:
+#     general: <prefix>/<env_type>/<prefix>/<name>
+#
+#     e.g. looking for connection to "HYPPO_PRODUCTION" in environment development when running validation
+#     look for DW-ETL/dev/development/validation/HYPPO_PRODUCTION
+#              DW-ETL/dev/development/HYPPO_PRODUCTION
+#              DW-ETL/dev/HYPPO_PRODUCTION
+#              DW-ETL/HYPPO_PRODUCTION
+#
+#     when do overrides occur?
+#       - pick different base stack
+#       - pick different environment (development vs. tom vs. tom/validation)
+
 
 def get(name: str, default: Union[str, None]=None) -> str:
     """
